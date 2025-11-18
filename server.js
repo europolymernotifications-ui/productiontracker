@@ -8,6 +8,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 // Note: MONGO_URI is expected to be defined in your .env file
+// The server will use the MONGO_URI set in your Render environment variables.
 const MONGO_URI = process.env.MONGO_URI; 
 
 mongoose.connect(MONGO_URI)
@@ -147,16 +148,18 @@ function calculateNetRunningHours(data) {
 
 
 // --- Middleware ---
+// Assumes static assets (CSS, JS) are in a 'public' folder.
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// ** ⬇️ FIX: Explicitly serve index.html ⬇️ **
+// 🟢 CRITICAL FIX: Explicitly serve index.html from the root path (/)
+// This resolves the "Cannot GET /" error.
 app.get('/', (req, res) => {
     // This assumes index.html is in the same directory as server.js
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-// ** ⬆️ END FIX ⬆️ **
+// 🟢 END CRITICAL FIX
 
 // --- API Endpoints ---
 
@@ -164,5 +167,28 @@ app.get('/', (req, res) => {
  * Endpoint to submit new production data (Now saves to MongoDB)
  */
 app.post('/submit-production', async (req, res) => {
-// ... (Rest of your API routes)
-// ...
+  const data = req.body;
+  console.log('Received data:', data);
+
+  try {
+    // Create a new Mongoose document and save it to MongoDB
+    const newRecord = new ProductionRecord(data);
+    await newRecord.save();
+    
+    res.status(201).json({ message: 'Production data saved successfully!' });
+  } catch (error) {
+    console.error('Error saving production data:', error);
+    res.status(500).json({ message: 'Failed to save production data.', error: error.message });
+  }
+});
+
+/**
+ * Endpoint to get the list of saved customers (Now queries MongoDB for distinct values)
+ */
+app.get('/get-customers', async (req, res) => {
+  try {
+    // Use Mongoose to get distinct customer names
+    const distinctCustomers = await ProductionRecord.distinct('customerName');
+    res.json(distinctCustomers);
+  } catch (error) {
+    console.error('Error fetching customers:', error);
