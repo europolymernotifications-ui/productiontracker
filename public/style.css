@@ -335,3 +335,15 @@ button {
         display: none !important;
     }
 }
+
+#signature {
+    text-align: center;
+    margin-top: 2rem;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-color); /* Use the main text color */
+    opacity: 0.7; /* Make it slightly subtle */
+    width: 100%;
+    max-width: 900px; /* Match the container width */
+    position: relative; /* Position relative to the flow, but centered */
+}
