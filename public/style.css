@@ -16,18 +16,18 @@
 }
 
 body {
-    /* Use your new logo as the background */
-    background-image: url('logo_background.jpg');
     
-    /* Ensure it covers the whole screen */
+    background-image: url('logo_background.jpg');
     background-size: cover;
     background-position: center;
-    background-attachment: fixed; /* Keeps the background fixed on scroll */
-    
+    background-attachment: fixed; 
     color: var(--text-color);
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    
+    flex-direction: column; 
+    justify-content: flex-start; /* Start content at the top */
+    align-items: center; /* Center everything horizontally */
+    
     min-height: 100vh;
     padding: 2rem;
 }
@@ -336,14 +336,14 @@ button {
     }
 }
 
+/* --- My sign Supun Rathnayaka --- */
 #signature {
     text-align: center;
     margin-top: 2rem;
     padding: 0.5rem;
     font-size: 0.85rem;
-    color: var(--text-color); /* Use the main text color */
-    opacity: 0.7; /* Make it slightly subtle */
+    color: var(--text-color); 
+    opacity: 0.7; 
     width: 100%;
     max-width: 900px; /* Match the container width */
-    position: relative; /* Position relative to the flow, but centered */
 }
