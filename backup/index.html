@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container" id="selectionScreen">
+        <h1>Welcome</h1>
+        <p>Please select your production line to begin.</p>
+        <div class="tab-container">
+            <button class="tab-button" id="selectAsb1">ASB 1 (PET Bottles)</button>
+            <button class="tab-button" id="selectAsb2">ASB 2 (PC Bottles)</button>
+        </div>
+        
+        <div class="download-link-container">
+            <a href="/download-excel?section=ASB 1 (PET)" class="download-link">Download ASB 1 (PET) Report</a>
+            <a href="/download-excel?section=ASB 2 (PC)" class="download-link">Download ASB 2 (PC) Report</a>
+        </div>
+    </div>
+
+    <div class="container" id="formScreen" style="display: none;">
+        <h1 id="formTitle">Production Log</h1>
+        <form id="productionForm">
+            <input type="hidden" id="section" name="section">
+
+            <fieldset>
+                <legend>1. Shift Details</legend>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shift">Shift</label>
+                        <select id="shift" name="shift" required>
+                            <option value="">-- Select Shift --</option>
+                            <option value="Day">Day Shift</option>
+                            <option value="Night">Night Shift</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="shiftStart">Shift Start Time</label>
+                        <input type="time" id="shiftStart" name="shiftStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shiftEnd">Shift End Time</label>
+                        <input type="time" id="shiftEnd" name="shiftEnd" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Net Running Hours</label>
+                        <span id="netRunningHoursResult" style="font-size: 1.5rem; font-weight: bold; color: var(--primary-green); display: block; padding-top: 5px;">0.00 Hours</span>
+                        <input type="hidden" id="netRunningHoursInput" name="netRunningHours">
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>1B. Machine Downtime / Breakdowns</legend>
+                <p style="color: #ccc; margin-bottom: 15px;">Record periods when the machine was stopped.</p>
+                <div id="downtime-entries">
+                    
+                    <h4 style="margin-top: 10px; color: #aaa;">Breakdown 1</h4>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="breakdownStart1">Stop Time</label>
+                            <input type="time" id="breakdownStart1" name="breakdownStart1" class="downtime-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="breakdownEnd1">Start Time (After Break)</label>
+                            <input type="time" id="breakdownEnd1" name="breakdownEnd1" class="downtime-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="breakdownReason1">Reason</label>
+                            <input type="text" id="breakdownReason1" name="breakdownReason1">
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 15px; color: #aaa;">Breakdown 2 (Optional)</h4>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="breakdownStart2">Stop Time</label>
+                            <input type="time" id="breakdownStart2" name="breakdownStart2" class="downtime-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="breakdownEnd2">Start Time (After Break)</label>
+                            <input type="time" id="breakdownEnd2" name="breakdownEnd2" class="downtime-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="breakdownReason2">Reason</label>
+                            <input type="text" id="breakdownReason2" name="breakdownReason2">
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <fieldset>
+                <legend>2. Job Details</legend>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="customerName">Customer Name</label>
+                        <input list="customer-list" id="customerName" name="customerName" required>
+                        <datalist id="customer-list">
+                            </datalist>
+                    </div>
+                    <div class="form-group">
+                        <label for="brand">Brand</label>
+                        <input type="text" id="brand" name="brand">
+                    </div>
+                    <div class="form-group">
+                        <label for="moldType">Mold Type</label>
+                        <input type="text" id="moldType" name="moldType">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="wallThickness">Wall thickness</label>
+                        <select id="wallThickness" name="wallThickness">
+                            <option value="Good">Good</option>
+                            <option value="Bad">Bad</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dateInsert">Date insert</label>
+                        <select id="dateInsert" name="dateInsert">
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bottomMoldCooling">Bottom mold/ cooling</label>
+                        <select id="bottomMoldCooling" name="bottomMoldCooling">
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bottleGeneralStrength">Bottle general strength</label>
+                        <select id="bottleGeneralStrength" name="bottleGeneralStrength">
+                            <option value="Good">Good</option>
+                            <option value="Bad">Bad</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label>Post-Production:</label>
+                        <input type="checkbox" id="embossing" name="processes" value="Embossing">
+                        <label for="embossing">Embossing</label>
+                        <input type="checkbox" id="screenPrinting" name="processes" value="Screen Printing">
+                        <label for="screenPrinting">Screen Printing</label>
+                        <input type="checkbox" id="hotStamping" name="processes" value="Hot-Stamping">
+                        <label for="hotStamping">Hot-Stamping</label>
+                        <input type="checkbox" id="labelling" name="processes" value="Labelling">
+                        <label for="labelling">Labelling</label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>3. Personnel</legend>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="shiftIncharge">Shift Incharge</label>
+                        <input type="text" id="shiftIncharge" name="shiftIncharge">
+                    </div>
+                    <div class="form-group">
+                        <label for="operator">Operator</label>
+                        <input type="text" id="operator" name="operator">
+                    </div>
+                    <div class="form-group">
+                        <label for="helpers">Helpers</label>
+                        <input type="text" id="helpers" name="helpers">
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>4. Material Usage</legend>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label for="resinGrade">Resin / Grade</label>
+                        <input type="text" id="resinGrade" name="resinGrade">
+                    </div>
+                    <div class="form-group">
+                        <label for="virginKg">Virgin (KG)</label>
+                        <input type="number" id="virginKg" name="virginKg" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="regrindKg">Regrind (KG)</label>
+                        <input type="number" id="regrindKg" name="regrindKg" min="0" step="0.1">
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>5. Production Output</legend>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label for="goodBottles">Good Bottles (Pieces)</label>
+                        <input type="number" id="goodBottles" name="goodBottles" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="rejectedBottles">Rejected Bottles (Pieces)</label>
+                        <input type="number" id="rejectedBottles" name="rejectedBottles" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="preform">Preform (Pieces)</label>
+                        <input type="number" id="preform" name="preform" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="lumpsKg">LUMP (KG)</label>
+                        <input type="number" id="lumpsKg" name="lumpsKg" min="0" step="0.1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Wastage (%)</label>
+                        <span id="wastageResult" style="font-size: 1.5rem; font-weight: bold; color: var(--primary-green); display: block; padding-top: 5px;">0.00%</span>
+                    </div>
+                </div>
+            </fieldset>
+
+             <fieldset>
+                <legend>6. Operator Notes</legend>
+                <div class="form-group">
+                    <label for="operatorNotes">Last Notes of Operator</label>
+                    <textarea id="operatorNotes" name="operatorNotes" rows="4"></textarea>
+                </div>
+            </fieldset>
+
+            <div class="button-container">
+                <button type="button" id="backButton" class="btn-secondary">Back to Sections</button>
+                <button type="submit" class="btn-primary">Submit Production Data</button>
+            </div>
+        </form>
+        <div id="statusMessage"></div>
+        
+        <div class="button-container" id="printButtonContainer" style="margin-top: 10px; display: none; justify-content: flex-end;">
+            <button type="button" id="printReportButton" class="btn-secondary">🖨️ Print Last Report</button>
+        </div>
+        
+    </div>
+    
+    <div class="container" id="printScreen" style="display: none; width: 8.5in; max-width: 8.5in; margin: 0 auto; padding: 20px; color: #000; background: #fff;">
+        <div id="printContent">
+            </div>
+        <div class="button-container no-print" style="margin-top: 20px;">
+            <button type="button" id="backFromPrintButton" class="btn-secondary" style="width: 100%;">Return to Form</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <div id="signature">Developed by Supun Rathnayaka</div>
+</body>
+</html>

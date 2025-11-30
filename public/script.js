@@ -1,39 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Screens
+    // --- Elements ---
     const selectionScreen = document.getElementById('selectionScreen');
     const formScreen = document.getElementById('formScreen');
-    const printScreen = document.getElementById('printScreen'); // 🟢 NEW
-    const printContent = document.getElementById('printContent'); // 🟢 NEW
+    const printScreen = document.getElementById('printScreen');
+    const printContent = document.getElementById('printContent');
 
     // Buttons
     const selectAsb1Btn = document.getElementById('selectAsb1');
     const selectAsb2Btn = document.getElementById('selectAsb2');
     const backButton = document.getElementById('backButton');
-    const printReportButton = document.getElementById('printReportButton'); // 🟢 NEW
-    const printButtonContainer = document.getElementById('printButtonContainer'); // 🟢 NEW
-    const backFromPrintButton = document.getElementById('backFromPrintButton'); // 🟢 NEW
+    const printReportButton = document.getElementById('printReportButton');
+    const printButtonContainer = document.getElementById('printButtonContainer');
+    const backFromPrintButton = document.getElementById('backFromPrintButton');
 
-    // Form
+    // Form Elements
     const form = document.getElementById('productionForm');
     const formTitle = document.getElementById('formTitle');
     const sectionInput = document.getElementById('section');
     const customerDatalist = document.getElementById('customer-list');
     const statusMessage = document.getElementById('statusMessage');
 
-    // --- Calculation Weights ---
+    // --- Configuration ---
     const WEIGHTS = {
-        'ASB 1 (PET)': 0.706, // Weight of 1 piece in KG
-        'ASB 2 (PC)': 0.820,  // Weight of 1 piece in KG
+        'ASB 1 (PET)': 0.706, 
+        'ASB 2 (PC)': 0.820
     };
-    
-    // --- Helper Function: Convert "HH:MM" to total minutes from midnight ---
+
+    // --- Helper: Time to Minutes ---
     function timeToMinutes(timeStr) {
         if (!timeStr) return 0;
         const [hours, minutes] = timeStr.split(':').map(Number);
         return hours * 60 + minutes;
     }
 
-    // 🟢 NEW: Net Running Hours Calculation Logic
+    // --- Logic: Calculate Net Running Hours ---
     function calculateNetRunningHours() {
         const shiftStartInput = document.getElementById('shiftStart').value;
         const shiftEndInput = document.getElementById('shiftEnd').value;
@@ -41,72 +41,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const netRunningHoursInputElement = document.getElementById('netRunningHoursInput');
         
         if (!shiftStartInput || !shiftEndInput) {
-            netRunningHoursResultElement.textContent = '0.00 Hours';
-            netRunningHoursInputElement.value = 0;
+            if(netRunningHoursResultElement) netRunningHoursResultElement.textContent = '0.00 Hours';
+            if(netRunningHoursInputElement) netRunningHoursInputElement.value = 0;
             return;
         }
 
         let startMinutes = timeToMinutes(shiftStartInput);
         let endMinutes = timeToMinutes(shiftEndInput);
         
-        // 1. Calculate Total Planned Shift Duration
         let totalShiftDurationMinutes = endMinutes - startMinutes;
-        
-        // Handle overnight shift (if end time is less than start time)
-        if (totalShiftDurationMinutes < 0) {
-            totalShiftDurationMinutes += 24 * 60; // Add 24 hours
-        }
+        if (totalShiftDurationMinutes < 0) totalShiftDurationMinutes += 24 * 60; // Handle overnight
 
-        if (totalShiftDurationMinutes <= 0) {
-            netRunningHoursResultElement.textContent = '0.00 Hours (Check Times)';
-            netRunningHoursInputElement.value = 0;
-            return;
-        }
-        
-        // 2. Calculate Total Downtime
         let totalDowntimeMinutes = 0;
         
-        // Loop through the two potential breakdown entries
         for (let i = 1; i <= 2; i++) {
-            const breakdownStartStr = document.getElementById(`breakdownStart${i}`).value;
-            const breakdownEndStr = document.getElementById(`breakdownEnd${i}`).value;
-
-            if (breakdownStartStr && breakdownEndStr) {
-                let breakStartMinutes = timeToMinutes(breakdownStartStr);
-                let breakEndMinutes = timeToMinutes(breakdownEndStr);
+            const startElem = document.getElementById(`breakdownStart${i}`);
+            const endElem = document.getElementById(`breakdownEnd${i}`);
+            
+            if (startElem && endElem && startElem.value && endElem.value) {
+                let breakStart = timeToMinutes(startElem.value);
+                let breakEnd = timeToMinutes(endElem.value);
                 
-                // If breakdown end time is earlier than start time, assume it crosses midnight
-                if (breakEndMinutes < breakStartMinutes) {
-                    breakEndMinutes += 24 * 60; 
-                }
+                if (breakEnd < breakStart) breakEnd += 24 * 60; // Handle overnight breakdown
                 
-                const duration = breakEndMinutes - breakStartMinutes;
-                if (duration > 0) {
-                    totalDowntimeMinutes += duration;
-                }
+                const duration = breakEnd - breakStart;
+                if (duration > 0) totalDowntimeMinutes += duration;
             }
         }
         
-        // 3. Calculate Net Running Time
         const netRunningTimeMinutes = Math.max(0, totalShiftDurationMinutes - totalDowntimeMinutes);
         const netRunningHours = netRunningTimeMinutes / 60;
         
-        // 4. Update Display and Hidden Input
-        netRunningHoursResultElement.textContent = netRunningHours.toFixed(2) + ' Hours';
-        netRunningHoursInputElement.value = netRunningHours.toFixed(2);
+        if(netRunningHoursResultElement) netRunningHoursResultElement.textContent = netRunningHours.toFixed(2) + ' Hours';
+        if(netRunningHoursInputElement) netRunningHoursInputElement.value = netRunningHours.toFixed(2);
     }
-    // 🟢 END: Net Running Hours Calculation Logic
-    
-    // --- Wastage Calculation Logic (Remains the same) ---
+
+    // --- Logic: Calculate Wastage ---
     function calculateWastage() {
         const section = sectionInput.value;
-        const pieceWeight = WEIGHTS[section];
-        const wastageResultElement = document.getElementById('wastageResult');
-
-        if (!pieceWeight) {
-            wastageResultElement.textContent = 'N/A';
-            return;
-        }
+        // Strip " (PET)" or " (PC)" to match keys if necessary, or ensure exact match in WEIGHTS
+        // Currently your buttons send 'ASB 1 (PET)' which matches keys.
+        const pieceWeight = WEIGHTS[section] || 0.706; // Default fallback if undefined
 
         const G = parseFloat(document.getElementById('goodBottles').value) || 0;
         const R = parseFloat(document.getElementById('rejectedBottles').value) || 0;
@@ -124,38 +99,38 @@ document.addEventListener('DOMContentLoaded', () => {
             wastagePercentage = (totalWastageKg / totalInputKg) * 100;
         }
 
-        wastageResultElement.textContent = wastagePercentage.toFixed(2) + '%';
-        
-        if (wastagePercentage > 3) {
-            wastageResultElement.style.color = '#ff4d4d'; // Red
-        } else {
-            wastageResultElement.style.color = 'var(--primary-green)'; 
+        const wastageElement = document.getElementById('wastageResult');
+        if(wastageElement) {
+            wastageElement.textContent = wastagePercentage.toFixed(2) + '%';
+            if (wastagePercentage > 3) {
+                wastageElement.style.color = '#ff4d4d'; 
+            } else {
+                wastageElement.style.color = 'var(--primary-green)'; 
+            }
         }
     }
 
-    // Event Listeners for calculations
-    const timeInputIds = ['shift', 'shiftStart', 'shiftEnd', 'breakdownStart1', 'breakdownEnd1', 'breakdownStart2', 'breakdownEnd2'];
-    timeInputIds.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.addEventListener('input', calculateNetRunningHours);
+    // --- Event Listeners: Auto-Calculate ---
+    const calcEvents = [
+        'shift', 'shiftStart', 'shiftEnd', 
+        'breakdownStart1', 'breakdownEnd1', 'breakdownStart2', 'breakdownEnd2',
+        'goodBottles', 'rejectedBottles', 'preform', 'lumpsKg'
+    ];
+    calcEvents.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => {
+                calculateNetRunningHours();
+                calculateWastage();
+            });
         }
     });
 
-    const calculationInputIds = ['goodBottles', 'rejectedBottles', 'preform', 'lumpsKg'];
-    calculationInputIds.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.addEventListener('input', calculateWastage);
-        }
-    });
-
-    // --- Fetch Customers (Unchanged) ---
+    // --- API: Fetch Customers ---
     async function fetchCustomers() {
         try {
             const response = await fetch('/get-customers');
             const customers = await response.json();
-            
             customerDatalist.innerHTML = ''; 
             customers.forEach(customer => {
                 const option = document.createElement('option');
@@ -167,135 +142,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Show Form Function (Updated) ---
+    // --- Navigation: Show Form ---
     function showForm(sectionName) {
         formTitle.textContent = `${sectionName} - Production Log`;
-        sectionInput.value = sectionName;
+        sectionInput.value = sectionName; // "ASB 1 (PET)" or "ASB 2 (PC)"
         
         statusMessage.textContent = ''; 
-        printButtonContainer.style.display = 'none'; // Hide print button initially
-
+        printButtonContainer.style.display = 'none';
         selectionScreen.style.display = 'none';
         formScreen.style.display = 'block';
-        printScreen.style.display = 'none'; // Ensure print screen is hidden
+        printScreen.style.display = 'none';
         
+        // Reset and Prep
+        form.reset();
         fetchCustomers();
         calculateWastage(); 
         calculateNetRunningHours(); 
     }
 
-    // --- Print Logic --- 🟢 NEW FUNCTION
-    function generatePrintContent(data) {
-        let content = `
-            <style>
-                @media print {
-                    /* Reset styles for printing */
-                    body { background: #fff !important; color: #000 !important; }
-                    .container { box-shadow: none !important; border: 1px solid #ccc; padding: 15px; margin: 0; }
-                    .no-print { display: none !important; }
-                    h1 { color: #000 !important; font-size: 1.5rem; text-align: center; margin-bottom: 20px; }
-                    h2 { font-size: 1.2rem; border-bottom: 2px solid #000; padding-bottom: 5px; margin-top: 20px; }
-                    .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-                    .print-item { border-bottom: 1px dotted #ccc; padding: 5px 0; }
-                    .print-item strong { display: block; font-size: 0.8rem; color: #555; }
-                    .print-highlight { font-weight: bold; color: #008037; font-size: 1.1rem; }
-                }
-            </style>
-            <h1>Production Report - ${data.section}</h1>
-            
-            <h2>1. Shift & Runtime Details</h2>
-            <div class="print-grid">
-                <div class="print-item"><strong>Date:</strong> ${data.date}</div>
-                <div class="print-item"><strong>Shift:</strong> ${data.shift}</div>
-                <div class="print-item"><strong>Start Time:</strong> ${data.shiftStart}</div>
-                <div class="print-item"><strong>End Time:</strong> ${data.shiftEnd}</div>
-                <div class="print-item"><strong>Net Running Hours:</strong> <span class="print-highlight">${data.netRunningHours || '0.00'} Hours</span></div>
-                <div class="print-item"><strong>Shift Incharge:</strong> ${data.shiftIncharge || '-'}</div>
-            </div>
-            
-            <h2>2. Downtime & Reasons</h2>
-            <div class="print-grid">
-                <div class="print-item"><strong>Stop 1 Time:</strong> ${data.breakdownStart1 || '-'}</div>
-                <div class="print-item"><strong>Start 1 Time:</strong> ${data.breakdownEnd1 || '-'}</div>
-                <div style="grid-column: 1 / -1;" class="print-item"><strong>Reason 1:</strong> ${data.breakdownReason1 || '-'}</div>
-                <div class="print-item"><strong>Stop 2 Time:</strong> ${data.breakdownStart2 || '-'}</div>
-                <div class="print-item"><strong>Start 2 Time:</strong> ${data.breakdownEnd2 || '-'}</div>
-                <div style="grid-column: 1 / -1;" class="print-item"><strong>Reason 2:</strong> ${data.breakdownReason2 || '-'}</div>
-            </div>
-
-            <h2>3. Job & Quality Details</h2>
-            <div class="print-grid">
-                <div class="print-item"><strong>Customer:</strong> ${data.customerName}</div>
-                <div class="print-item"><strong>Brand:</strong> ${data.brand || '-'}</div>
-                <div class="print-item"><strong>Mold Type:</strong> ${data.moldType || '-'}</div>
-                <div class="print-item"><strong>Wall Thickness:</strong> ${data.wallThickness}</div>
-                <div class="print-item"><strong>Date Insert:</strong> ${data.dateInsert}</div>
-                <div class="print-item"><strong>Bottom Mold/Cooling:</strong> ${data.bottomMoldCooling}</div>
-                <div class="print-item"><strong>Bottle Strength:</strong> ${data.bottleGeneralStrength}</div>
-            </div>
-            
-            <h2>4. Output & Materials</h2>
-            <div class="print-grid">
-                <div class="print-item"><strong>Good Bottles (Pcs):</strong> ${data.goodBottles}</div>
-                <div class="print-item"><strong>Rejected Bottles (Pcs):</strong> ${data.rejectedBottles || 0}</div>
-                <div class="print-item"><strong>Preform (Pcs):</strong> ${data.preform || 0}</div>
-                <div class="print-item"><strong>LUMP (KG):</strong> ${data.lumpsKg || 0}</div>
-                <div class="print-item"><strong>Wastage (%):</strong> <span class="print-highlight">${data.wastagePercentage}</span></div>
-                <div class="print-item"><strong>Resin / Grade:</strong> ${data.resinGrade || '-'}</div>
-                <div class="print-item"><strong>Virgin (KG):</strong> ${data.virginKg || 0}</div>
-                <div class="print-item"><strong>Regrind (KG):</strong> ${data.regrindKg || 0}</div>
-            </div>
-
-            <h2>5. Post-Production & Notes</h2>
-            <div class="print-grid">
-                <div class="print-item"><strong>Processes:</strong> ${data.processes.join(', ') || 'None'}</div>
-            </div>
-            <div style="margin-top: 15px;">
-                <strong>Operator Notes:</strong>
-                <p style="white-space: pre-wrap; margin-top: 5px; border: 1px solid #ccc; padding: 10px; min-height: 80px;">${data.operatorNotes || 'No notes provided.'}</p>
-            </div>
-        `;
-        return content;
-    }
+    // --- Navigation Listeners ---
+    if(selectAsb1Btn) selectAsb1Btn.addEventListener('click', () => showForm('ASB 1 (PET)'));
+    if(selectAsb2Btn) selectAsb2Btn.addEventListener('click', () => showForm('ASB 2 (PC)'));
     
-    // --- Event Listeners ---
-    selectAsb1Btn.addEventListener('click', () => showForm('ASB 1 (PET)'));
-    selectAsb2Btn.addEventListener('click', () => showForm('ASB 2 (PC)'));
-    backButton.addEventListener('click', () => {
+    if(backButton) backButton.addEventListener('click', () => {
+        form.reset();
         formScreen.style.display = 'none';
         selectionScreen.style.display = 'block';
         printButtonContainer.style.display = 'none';
     });
 
+    // --- SUBMIT LOGIC ---
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // Basic Client-side Validation
+        if (!form.reportValidity()) {
+            statusMessage.textContent = 'Error: Please fill in all required fields.';
+            statusMessage.style.color = '#ff8a80'; 
+            return;
+        }
+
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        
-        data.processes = formData.getAll('processes');
-        
-        // --- Convert numbers ---
-        data.virginKg = parseFloat(data.virginKg) || 0;
-        data.regrindKg = parseFloat(data.regrindKg) || 0;
-        data.lumpsKg = parseFloat(data.lumpsKg) || 0;
-        
-        data.goodBottles = parseInt(data.goodBottles) || 0;
-        data.rejectedBottles = parseInt(data.rejectedBottles) || 0;
-        data.preform = parseInt(data.preform) || 0;
+        data.processes = formData.getAll('processes'); // Capture checkboxes as array
 
-        // Capture live calculated values
-        const wastagePercentage = document.getElementById('wastageResult').textContent;
-        data.wastagePercentage = wastagePercentage;
-        // netRunningHours is captured via the hidden input data.netRunningHours
+        // Force calculations to be up-to-date in the data object
+        data.wastagePercentage = document.getElementById('wastageResult').textContent;
+        data.netRunningHours = document.getElementById('netRunningHoursInput').value;
 
-        // Send data to the server
+        // Convert numeric strings to numbers
+        const numericFields = ['virginKg', 'regrindKg', 'lumpsKg', 'goodBottles', 'rejectedBottles', 'preform'];
+        numericFields.forEach(field => {
+            data[field] = data[field] ? parseFloat(data[field]) : 0;
+        });
+
         try {
             const response = await fetch('/submit-production', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
 
@@ -304,10 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 statusMessage.textContent = result.message + ' You can now print this report.';
                 statusMessage.style.color = 'var(--primary-green)';
-                form.reset();
-                calculateWastage(); 
-                calculateNetRunningHours(); 
-                printButtonContainer.style.display = 'flex'; // 🟢 Show the print button on success
+                // DO NOT RESET FORM HERE so user can print
+                printButtonContainer.style.display = 'flex'; 
             } else {
                 throw new Error(result.message || 'Failed to save data');
             }
@@ -317,37 +219,115 @@ document.addEventListener('DOMContentLoaded', () => {
             printButtonContainer.style.display = 'none';
         }
     });
-    
-    // 🟢 Event listener for the Print Button
-    printReportButton.addEventListener('click', async () => {
-        try {
-            const response = await fetch('/get-last-record');
-            const lastRecord = await response.json();
-            
-            // 1. Hide the form screen
-            formScreen.style.display = 'none';
-            
-            // 2. Show the print screen
-            printScreen.style.display = 'block';
-            
-            // 3. Populate content
-            printContent.innerHTML = generatePrintContent(lastRecord);
-            
-            // 4. Trigger print dialog
-            window.print();
-            
-        } catch (error) {
-            alert('Error fetching last record for printing: ' + error.message);
-        }
-    });
 
-    // 🟢 Event listener to go back from print screen
-    backFromPrintButton.addEventListener('click', () => {
-        printScreen.style.display = 'none';
-        formScreen.style.display = 'block';
-    });
+    // --- PRINT GENERATION LOGIC ---
+    function generatePrintContent(data) {
+        // 🟢 SAFE ARRAY HANDLING: Prevent .join() error
+        // If data.processes is undefined or not an array, default to empty array
+        const processesList = (Array.isArray(data.processes) && data.processes.length > 0) 
+            ? data.processes.join(', ') 
+            : 'None';
 
+        return `
+            <style>
+                @media print {
+                    body { background: #fff !important; color: #000 !important; }
+                    .container { border: none; box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; }
+                    h1 { text-align: center; font-size: 1.5rem; margin-bottom: 20px; color: #000; }
+                    h2 { font-size: 1.2rem; border-bottom: 2px solid #000; margin-top: 20px; padding-bottom: 5px; color: #000; }
+                    .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+                    .print-item { border-bottom: 1px dotted #ccc; padding: 5px 0; font-size: 0.95rem; }
+                    .print-item strong { margin-right: 5px; }
+                    .full-width { grid-column: 1 / -1; }
+                    .print-highlight { font-weight: bold; }
+                }
+            </style>
+            
+            <h1>Production Report - ${data.section}</h1>
+            
+            <h2>1. Shift & Runtime</h2>
+            <div class="print-grid">
+                <div class="print-item"><strong>Date:</strong> ${data.date}</div>
+                <div class="print-item"><strong>Shift:</strong> ${data.shift}</div>
+                <div class="print-item"><strong>Start:</strong> ${data.shiftStart}</div>
+                <div class="print-item"><strong>End:</strong> ${data.shiftEnd}</div>
+                <div class="print-item"><strong>Net Running Hours:</strong> ${data.netRunningHours || '0.00'} Hours</div>
+                <div class="print-item"><strong>Incharge:</strong> ${data.shiftIncharge || '-'}</div>
+                <div class="print-item"><strong>Operator:</strong> ${data.operator || '-'}</div>
+                <div class="print-item"><strong>Helpers:</strong> ${data.helpers || '-'}</div>
+            </div>
 
-    // Initial fetch of customers
+            <h2>2. Downtime</h2>
+            <div class="print-grid">
+                <div class="print-item"><strong>Stop 1:</strong> ${data.breakdownStart1 || '-'}</div>
+                <div class="print-item"><strong>Start 1:</strong> ${data.breakdownEnd1 || '-'}</div>
+                <div class="print-item full-width"><strong>Reason 1:</strong> ${data.breakdownReason1 || '-'}</div>
+                <div class="print-item"><strong>Stop 2:</strong> ${data.breakdownStart2 || '-'}</div>
+                <div class="print-item"><strong>Start 2:</strong> ${data.breakdownEnd2 || '-'}</div>
+                <div class="print-item full-width"><strong>Reason 2:</strong> ${data.breakdownReason2 || '-'}</div>
+            </div>
+
+            <h2>3. Job Details</h2>
+            <div class="print-grid">
+                <div class="print-item"><strong>Customer:</strong> ${data.customerName || '-'}</div>
+                <div class="print-item"><strong>Brand:</strong> ${data.brand || '-'}</div>
+                <div class="print-item"><strong>Mold Type:</strong> ${data.moldType || '-'}</div>
+                <div class="print-item"><strong>Wall Thickness:</strong> ${data.wallThickness || '-'}</div>
+                <div class="print-item"><strong>Date Insert:</strong> ${data.dateInsert || '-'}</div>
+                <div class="print-item"><strong>Bottom Mold/Cooling:</strong> ${data.bottomMoldCooling || '-'}</div>
+                <div class="print-item"><strong>Bottle Strength:</strong> ${data.bottleGeneralStrength || '-'}</div>
+            </div>
+
+            <h2>4. Material & Output</h2>
+            <div class="print-grid">
+                <div class="print-item"><strong>Resin Grade:</strong> ${data.resinGrade || '-'}</div>
+                <div class="print-item"><strong>Virgin (KG):</strong> ${data.virginKg || '0'}</div>
+                <div class="print-item"><strong>Regrind (KG):</strong> ${data.regrindKg || '0'}</div>
+                <div class="print-item"><strong>Good Bottles:</strong> ${data.goodBottles || '0'}</div>
+                <div class="print-item"><strong>Rejected Bottles:</strong> ${data.rejectedBottles || '0'}</div>
+                <div class="print-item"><strong>Preform:</strong> ${data.preform || '0'}</div>
+                <div class="print-item"><strong>Lump (KG):</strong> ${data.lumpsKg || '0'}</div>
+                <div class="print-item"><strong>Wastage (%):</strong> ${data.wastagePercentage || '0.00%'}</div>
+            </div>
+
+            <h2>5. Post-Production & Notes</h2>
+            <div class="print-grid">
+                <div class="print-item full-width"><strong>Processes:</strong> ${processesList}</div>
+            </div>
+            <div style="margin-top: 15px;">
+                <strong>Operator Notes:</strong>
+                <p style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;">${data.operatorNotes || 'No notes.'}</p>
+            </div>
+        `;
+    }
+
+    // --- PRINT LISTENERS ---
+    if(printReportButton) {
+        printReportButton.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/get-last-record');
+                const lastRecord = await response.json();
+                
+                // Hide Form, Show Print
+                formScreen.style.display = 'none';
+                printScreen.style.display = 'block';
+                
+                printContent.innerHTML = generatePrintContent(lastRecord);
+                
+                window.print();
+            } catch (error) {
+                alert('Error fetching record: ' + error.message);
+            }
+        });
+    }
+
+    if(backFromPrintButton) {
+        backFromPrintButton.addEventListener('click', () => {
+            printScreen.style.display = 'none';
+            formScreen.style.display = 'block';
+        });
+    }
+
+    // Initial Load
     fetchCustomers();
 });

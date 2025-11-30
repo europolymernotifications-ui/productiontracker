@@ -191,21 +191,53 @@ app.get('/get-customers', async (req, res) => {
   }
 });
 
-// 🟢 NEW ENDPOINT: Get the last submitted record (Now queries MongoDB) 🟢
 app.get('/get-last-record', async (req, res) => {
     try {
-        // Find one record, sorted by the latest creation time
-        const lastRecord = await ProductionRecord.findOne().sort({ createdAt: -1 }).limit(1);
-
+        // 🟢 FIXED: Used correct model name 'ProductionRecord'
+        const lastRecord = await ProductionRecord.findOne().sort({ _id: -1 }).lean(); 
+        
         if (!lastRecord) {
             return res.status(404).json({ message: 'No records found.' });
         }
+
+        // 1. Calculate Net Running Hours
+        const { netRunningHours } = calculateNetRunningHours(lastRecord);
+
+        // 2. Calculate Wastage Percentage
+        let wastagePercentage = 0;
         
-        // Return the plain JavaScript object
-        res.json(lastRecord.toObject());
+        // Ensure values are numbers for calculation
+        const goodBottles = Number(lastRecord.goodBottles) || 0;
+        const rejectedBottles = Number(lastRecord.rejectedBottles) || 0;
+        const preform = Number(lastRecord.preform) || 0;
+        const lumpsKg = Number(lastRecord.lumpsKg) || 0;
+        
+        // Get unit weight based on section
+        const unitWeight = WEIGHTS[lastRecord.section] || 0.706; // Default to PET if unknown
+
+        const goodKg = goodBottles * unitWeight;
+        const rejectedKg = rejectedBottles * unitWeight;
+        const preformKg = preform * unitWeight;
+        
+        const totalWastageKg = rejectedKg + preformKg + lumpsKg;
+        const totalInputKg = goodKg + totalWastageKg;
+
+        if (totalInputKg > 0) {
+            wastagePercentage = (totalWastageKg / totalInputKg) * 100;
+        }
+
+        // 3. Send the full record with calculated fields
+        const finalRecord = {
+            ...lastRecord,
+            netRunningHours: netRunningHours.toFixed(2),
+            wastagePercentage: wastagePercentage.toFixed(2)
+        };
+
+        res.json(finalRecord);
+
     } catch (error) {
         console.error('Error fetching last record:', error);
-        res.status(500).json({ message: 'Failed to fetch last record.' });
+        res.status(500).json({ message: 'Server error while retrieving data.' });
     }
 });
 
